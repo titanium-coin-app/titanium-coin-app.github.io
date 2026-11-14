@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coin Mining</title>
+<style>
+:root{--bg:#fff5fa;--card:#fff;--ink:#2a1822;--mute:#8a6f7d;--line:#f0d5e2;--pink:#ff4fa3;--ok:#1fa851;--bad:#d6334a;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1a0f16;--card:#27161f;--ink:#fbeaf2;--mute:#b995a8;--line:#3d2432;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1a0f16;--card:#27161f;--ink:#fbeaf2;--mute:#b995a8;--line:#3d2432;color-scheme:dark}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS",Verdana,sans-serif}
+*{box-sizing:border-box}
+#app{max-width:480px;margin:0 auto;min-height:100%;position:relative}
+header{display:flex;align-items:center;gap:12px;padding:12px 14px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5}
+header h2{margin:0;font-size:20px}
+.burger{background:none;border:0;padding:8px;width:42px;height:42px;display:flex;flex-direction:column;justify-content:center;gap:5px}
+.burger i{display:block;height:3px;border-radius:2px;background:var(--ink)}
+main{padding:8px 16px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:13px;color:var(--mute);margin-bottom:6px}
+input{width:100%;font:inherit;font-size:16px;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+input:disabled{opacity:.7}
+button.pri{font:inherit;font-weight:bold;background:var(--pink);color:#fff;border:0;border-radius:10px;padding:12px 18px;font-size:16px}
+button.sec{font:inherit;background:none;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px 18px;font-size:16px}
+button:disabled{opacity:.5}
+button:focus-visible,input:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+.row{display:flex;gap:8px;align-items:center}.row input{flex:1;min-width:0}
+.note{font-size:12px;color:var(--mute);margin:6px 0 0}
+.tick{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--ok);color:#fff;align-items:center;justify-content:center;font-size:14px;flex:none}
+.mail{display:flex;align-items:center;gap:10px;word-break:break-all;font-weight:bold}
+.mine{display:flex;flex-direction:column;align-items:center;padding-top:18px}
+#circle{width:5cm;height:5cm;border-radius:50%;background:var(--pink);color:#fff;border:0;font:inherit;font-weight:bold;font-size:22px;box-shadow:0 8px 24px #ff4fa366;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+#circle.wait{opacity:.75;box-shadow:none}
+#circle small{font-size:13px;font-weight:normal;padding:0 10px;text-align:center}
+.stats{display:flex;gap:12px;margin-top:22px;width:100%}.stats .card{flex:1;text-align:center;margin:0}
+.big{font-size:26px;font-weight:bold;color:var(--pink)}
+.mute{color:var(--mute);font-size:13px}
+#ov{position:fixed;inset:0;background:#0007;opacity:0;pointer-events:none;transition:opacity .2s;z-index:8}
+#ov.on{opacity:1;pointer-events:auto}
+#drawer{position:fixed;top:0;bottom:0;left:0;width:260px;max-width:80%;background:var(--card);z-index:9;transform:translateX(-100%);transition:transform .2s;padding:calc(env(safe-area-inset-top,0px) + 20px) 10px 20px}
+#drawer.on{transform:none}
+#drawer button{display:block;width:100%;text-align:left;font:inherit;font-size:17px;background:none;border:0;color:var(--ink);padding:14px 12px;border-radius:10px}
+#drawer button.cur{background:var(--bg);color:var(--pink);font-weight:bold}
+.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;z-index:20;padding:20px}
+.modal .card{max-width:320px;width:100%;margin:0}
+.seg{display:flex;gap:8px}.seg button{flex:1}.seg .on{background:var(--pink);color:#fff;border-color:var(--pink)}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:20px;font-size:14px;z-index:30;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%;text-align:center}
+#toast.on{opacity:1}
+.login{padding:50px 20px}.login h1{color:var(--pink);margin:0 0 6px}
+.sent{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;line-height:1.5;margin-bottom:12px;word-break:break-word}
+.out{margin-top:40px}.out button{width:100%;background:var(--bad);color:#fff;border:0;border-radius:10px;padding:14px;font:inherit;font-weight:bold;font-size:16px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/13.3.0/firebase-app.js";
+import{getAuth,onAuthStateChanged,sendSignInLinkToEmail,isSignInWithEmailLink,signInWithEmailLink,signOut}from"https://www.gstatic.com/firebasejs/13.3.0/firebase-auth.js";
+import{getFirestore,doc,getDoc,setDoc,updateDoc,runTransaction,increment,serverTimestamp,Timestamp}from"https://www.gstatic.com/firebasejs/13.3.0/firebase-firestore.js";
+
+const app=initializeApp({apiKey:"AIzaSyATIyqlBQ_ur4AnXISpEPQj7CGfJnFh2JA",authDomain:"coin-9f66e.firebaseapp.com",projectId:"coin-9f66e",storageBucket:"coin-9f66e.firebasestorage.app",messagingSenderId:"1040459028306",appId:"1:1040459028306:web:87afcd691c9790ffb88c8b"});
+const auth=getAuth(app),db=getFirestore(app);
+
+const T={
+en:{app:"Coin Mining",login:"Log in with your email",enterEmail:"Enter your email",sendLink:"Send login link",sent:"We sent a login link to {e}. Open your email and tap the link. Also check Spam.",confirmEmail:"Enter the same email to finish login",finish:"Finish login",change:"Use another email",badEmail:"Enter a valid email",loading:"Loading...",
+profile:"Profile",mining:"Mining",wallet:"Wallet",settings:"Settings",email:"Email",verified:"Verified",username:"Username",name:"Name",mobile:"Mobile number",save:"Save",add:"Add",
+userNote:"Can be saved only once. It cannot be changed later.",nameNote:"Can be changed once a week.",nameWait:"You can change it again in {d} day(s).",mobNote:"Can be added only once. It cannot be changed later.",
+userBad:"3 to 20 letters, numbers or _",taken:"This username is taken",mobBad:"Enter a 10 digit number",saved:"Saved",tap:"Tap to mine",next:"Next tap in",total:"Total",today:"Today",pts:"points",
+addr:"Wallet address",addrPh:"Paste your wallet address here",wd:"Withdrawal",wdNote:"Withdrawal will open soon.",theme:"Theme",dark:"Dark",light:"Light",lang:"Language",logout:"Log out",sure:"Do you want to log out?",confirm:"Confirm",decline:"Decline",got:"+10 points",err:"Something went wrong. Try again."},
+hi:{app:"कॉइन माइनिंग",login:"अपने ईमेल से लॉग इन करें",enterEmail:"अपना ईमेल डालें",sendLink:"लॉगिन लिंक भेजें",sent:"{e} पर लॉगिन लिंक भेजा गया है। ईमेल खोलकर लिंक पर टैप करें। Spam भी देखें।",confirmEmail:"लॉगिन पूरा करने के लिए वही ईमेल डालें",finish:"लॉगिन पूरा करें",change:"दूसरा ईमेल डालें",badEmail:"सही ईमेल डालें",loading:"लोड हो रहा है...",
+profile:"प्रोफाइल",mining:"माइनिंग",wallet:"वॉलेट",settings:"सेटिंग्स",email:"ईमेल",verified:"वेरिफाइड",username:"यूजरनेम",name:"नाम",mobile:"मोबाइल नंबर",save:"सेव करें",add:"जोड़ें",
+userNote:"सिर्फ एक बार सेव होगा। बाद में बदल नहीं सकते।",nameNote:"हफ्ते में एक बार बदल सकते हैं।",nameWait:"{d} दिन बाद फिर बदल पाएंगे।",mobNote:"सिर्फ एक बार जुड़ेगा। बाद में बदल नहीं सकते।",
+userBad:"3 से 20 अक्षर, अंक या _",taken:"ये यूजरनेम पहले से लिया हुआ है",mobBad:"10 अंकों का नंबर डालें",saved:"सेव हो गया",tap:"माइन करने के लिए टैप करें",next:"अगला टैप",total:"कुल",today:"आज",pts:"पॉइंट",
+addr:"वॉलेट एड्रेस",addrPh:"अपना वॉलेट एड्रेस यहां डालें",wd:"विड्रॉल",wdNote:"विड्रॉल जल्द शुरू होगा।",theme:"थीम",dark:"डार्क",light:"लाइट",lang:"भाषा",logout:"लॉग आउट",sure:"क्या आप लॉग आउट करना चाहते हैं?",confirm:"कन्फर्म",decline:"डिक्लाइन",got:"+10 पॉइंट",err:"कुछ गड़बड़ हुई। फिर कोशिश करें।"}};
+const $=s=>document.querySelector(s);
+const st={g(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},s(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let S=Object.assign({theme:"light",lang:"hi"},st.g("set")||{}),U=null,D=null,view="mining",step="email",tmail="",menu=false,timer=null,ready=false,busy=false;
+const t=(k,r)=>{let x=(T[S.lang]||T.en)[k]||k;if(r)for(const a in r)x=x.replace("{"+a+"}",r[a]);return x};
+const day=()=>new Date().toDateString();
+const uref=()=>doc(db,"users",U.uid);
+function theme(){document.documentElement.setAttribute("data-theme",S.theme);document.documentElement.lang=S.lang}
+function toast(m){const e=$("#toast");e.textContent=m;e.className="on";clearTimeout(toast.h);toast.h=setTimeout(()=>e.className="",2200)}
+function fail(e){console.error(e);toast(e&&e.code==="permission-denied"?t("err"):(e&&e.message==="taken"?t("taken"):t("err")))}
+async function loadDoc(){
+ const r=uref();let s=await getDoc(r);
+ if(!s.exists()){await setDoc(r,{user:"",name:"",nameAt:Timestamp.fromMillis(0),mobile:"",total:0,last:Timestamp.fromMillis(0),today:0,day:day(),addr:""});s=await getDoc(r)}
+ const d=s.data();D={user:d.user||"",name:d.name||"",nameAt:d.nameAt?d.nameAt.toMillis():0,mobile:d.mobile||"",total:d.total||0,last:d.last?d.last.toMillis():0,today:d.today||0,day:d.day||day(),addr:d.addr||""};
+ if(D.day!==day()){D.day=day();D.today=0}}
+function render(){theme();clearInterval(timer);const a=$("#app");
+ if(!ready){a.innerHTML=`<div class="login"><h1>⛏️ ${t("app")}</h1><p class="mute">${t("loading")}</p></div>`;return}
+ if(!U||!D){a.innerHTML=loginHtml();return}
+ const items=["profile","mining","wallet","settings"];
+ a.innerHTML=`<header><button class="burger" aria-label="Menu" onclick="tm(true)"><i></i><i></i><i></i></button><h2>${t(view)}</h2></header>
+ <main>${views[view]()}</main><div id="ov" class="${menu?"on":""}" onclick="tm(false)"></div>
+ <nav id="drawer" class="${menu?"on":""}">${items.map((i,n)=>`<button class="${i===view?"cur":""}" onclick="go('${i}')">${["👤","⛏️","👛","⚙️"][n]}  ${t(i)}</button>`).join("")}</nav>`;
+ if(view==="mining"){tick();timer=setInterval(tick,1000)}}
+window.tm=v=>{menu=v;$("#ov").className=v?"on":"";$("#drawer").className=v?"on":""};
+window.go=v=>{view=v;menu=false;render()};
+function loginHtml(){
+ const head=`<div class="login"><h1>⛏️ ${t("app")}</h1>`;
+ if(step==="sent")return head+`<div class="sent">${t("sent",{e:esc(tmail)})}</div><button class="sec" style="width:100%" onclick="step_('email')">${t("change")}</button></div>`;
+ if(step==="confirm")return head+`<p class="mute">${t("confirmEmail")}</p><input id="em" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com"><p></p><button class="pri" style="width:100%" ${busy?"disabled":""} onclick="finish()">${t("finish")}</button></div>`;
+ return head+`<p class="mute">${t("login")}</p><label>${t("enterEmail")}</label><input id="em" type="email" inputmode="email" autocomplete="email" value="${esc(tmail)}" placeholder="name@example.com"><p></p><button class="pri" style="width:100%" ${busy?"disabled":""} onclick="sendLink()">${t("sendLink")}</button></div>`}
+window.step_=s=>{step=s;render()};
+const valid=v=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+window.sendLink=async()=>{const v=$("#em").value.trim().toLowerCase();if(!valid(v))return toast(t("badEmail"));busy=true;
+ try{await sendSignInLinkToEmail(auth,v,{url:location.origin+location.pathname,handleCodeInApp:true});st.s("emailForSignIn",v);tmail=v;step="sent"}catch(e){fail(e)}busy=false;render()};
+window.finish=async()=>{const v=$("#em").value.trim().toLowerCase();if(!valid(v))return toast(t("badEmail"));await doLink(v)};
+async function doLink(v){busy=true;render();try{await signInWithEmailLink(auth,v,location.href);st.s("emailForSignIn",null);history.replaceState(null,"",location.pathname)}catch(e){fail(e);step="email"}busy=false;render()}
+const tickHtml=`<span class="tick">✓</span>`;
+const views={
+profile(){const wait=D.nameAt&&Date.now()-D.nameAt<604800000?Math.ceil((604800000-(Date.now()-D.nameAt))/86400000):0;
+ return`<div class="card"><label>${t("email")}</label><div class="mail">${esc(U.email)} ${U.emailVerified?tickHtml:""}</div>${U.emailVerified?`<p class="note" style="color:var(--ok)">${t("verified")}</p>`:""}</div>
+ <div class="card"><label>${t("username")}</label>${D.user?`<div class="mail">@${esc(D.user)}</div>`:`<div class="row"><input id="un" maxlength="20" autocapitalize="none" placeholder="username"><button class="pri" onclick="setUser()">${t("save")}</button></div><p class="note">${t("userNote")}</p>`}</div>
+ <div class="card"><label>${t("name")}</label><div class="row"><input id="nm" maxlength="40" value="${esc(D.name)}" ${wait?"disabled":""}><button class="pri" ${wait?"disabled":""} onclick="setName()">${t("save")}</button></div><p class="note">${wait?t("nameWait",{d:wait}):t("nameNote")}</p></div>
+ <div class="card"><label>${t("mobile")}</label>${D.mobile?`<div class="mail">${esc(D.mobile)}</div>`:`<div class="row"><input id="mb" inputmode="numeric" maxlength="10" placeholder="9876543210"><button class="pri" onclick="setMob()">${t("add")}</button></div><p class="note">${t("mobNote")}</p>`}</div>`},
+mining(){return`<div class="mine"><button id="circle" onclick="mine()"></button>${stats()}</div>`},
+wallet(){return`${stats(true)}<div class="card"><label>${t("addr")}</label><div class="row"><input id="ad" value="${esc(D.addr)}" placeholder="${t("addrPh")}" autocapitalize="none"><button class="pri" onclick="setAddr()">${t("save")}</button></div></div>
+ <div class="card"><b>${t("wd")}</b><p class="note">${t("wdNote")}</p></div>`},
+settings(){return`<div class="card"><label>${t("theme")}</label><div class="seg"><button class="sec ${S.theme==="light"?"on":""}" onclick="setS('theme','light')">${t("light")}</button><button class="sec ${S.theme==="dark"?"on":""}" onclick="setS('theme','dark')">${t("dark")}</button></div></div>
+ <div class="card"><label>${t("lang")}</label><div class="seg"><button class="sec ${S.lang==="hi"?"on":""}" onclick="setS('lang','hi')">हिन्दी</button><button class="sec ${S.lang==="en"?"on":""}" onclick="setS('lang','en')">English</button></div></div>
+ <div class="out"><button onclick="ask()">${t("logout")}</button></div>`}};
+function stats(one){
+ return one?`<div class="card" style="text-align:center"><div class="mute">${t("total")}</div><div class="big" style="font-size:34px">${D.total}</div><div class="mute">${t("pts")}</div></div>`:`<div class="stats"><div class="card"><div class="mute">${t("total")}</div><div class="big" id="tt">${D.total}</div><div class="mute">${t("pts")}</div></div><div class="card"><div class="mute">${t("today")}</div><div class="big" id="td">${D.today}</div><div class="mute">${t("pts")}</div></div></div>`}
+function fmt(ms){const s=Math.ceil(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return[h,m,x].map(n=>String(n).padStart(2,"0")).join(":")}
+function tick(){const c=$("#circle");if(!c||!D)return;if(D.day!==day()){D.day=day();D.today=0;const td=$("#td");if(td)td.textContent=0}
+ const left=D.last+86400000-Date.now();
+ if(left>0){c.className="wait";c.innerHTML=`<small>${t("next")}</small>${fmt(left)}`}else{c.className="";c.innerHTML=`⛏️<small>${t("tap")}</small>`}}
+window.mine=async()=>{if(busy||Date.now()<D.last+86400000)return;busy=true;
+ try{await updateDoc(uref(),{total:increment(10),last:serverTimestamp(),today:(D.day===day()?D.today:0)+10,day:day()});await loadDoc();toast(t("got"))}catch(e){fail(e)}busy=false;render()};
+window.setUser=async()=>{const v=$("#un").value.trim().toLowerCase();if(!/^[a-z0-9_]{3,20}$/.test(v))return toast(t("userBad"));
+ try{await runTransaction(db,async tx=>{const r=doc(db,"usernames",v);const s=await tx.get(r);if(s.exists())throw new Error("taken");tx.set(r,{uid:U.uid});tx.update(uref(),{user:v})});await loadDoc();render();toast(t("saved"))}catch(e){fail(e)}};
+window.setName=async()=>{const v=$("#nm").value.trim();if(!v||v===D.name)return;try{await updateDoc(uref(),{name:v,nameAt:serverTimestamp()});await loadDoc();render();toast(t("saved"))}catch(e){fail(e)}};
+window.setMob=async()=>{const v=$("#mb").value.trim();if(!/^\d{10}$/.test(v))return toast(t("mobBad"));try{await updateDoc(uref(),{mobile:v});await loadDoc();render();toast(t("saved"))}catch(e){fail(e)}};
+window.setAddr=async()=>{try{await updateDoc(uref(),{addr:$("#ad").value.trim()});await loadDoc();toast(t("saved"))}catch(e){fail(e)}};
+window.setS=(k,v)=>{S[k]=v;st.s("set",S);render()};
+window.ask=()=>{const m=document.createElement("div");m.className="modal";m.id="lm";m.innerHTML=`<div class="card"><p style="margin-top:0;font-weight:bold">${t("sure")}</p><div class="seg"><button class="sec" onclick="document.getElementById('lm').remove()">${t("decline")}</button><button class="pri" onclick="logout()">${t("confirm")}</button></div></div>`;document.body.appendChild(m)};
+window.logout=async()=>{const m=$("#lm");if(m)m.remove();try{await signOut(auth)}catch(e){fail(e)}};
+onAuthStateChanged(auth,async u=>{U=u;D=null;if(u){try{await loadDoc()}catch(e){fail(e)}view="mining";menu=false}else{step="email"}ready=true;render()});
+if(isSignInWithEmailLink(auth,location.href)){const e=st.g("emailForSignIn");if(e)doLink(e);else{step="confirm"}}
+render();
+</script>
+</body>
+</html>
